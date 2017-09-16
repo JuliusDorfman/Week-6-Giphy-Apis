@@ -1,19 +1,18 @@
 $(document).ready(function() {
-    console.log('', "ready");
+    console.log("ready");
 
-    var topics = ['bauble', 'bibelot', 'curio', 'gewgaw', 'trinket', 'memento', 'souvenir', 'trifle', 'tchotchke'];
-    var topic;
+    var topics = ['rain', 'storm', 'snow', 'hurricane', 'earthquake', 'sleet', 'hail', 'sun', 'daybreak', 'sunset'];
+    var unacceptableValues = ['', 'input new topic', 'duplicate topic detected', 'invalid input or duplicate topic'];
 
     var api = {
         baseURL: "http://api.giphy.com/v1/gifs/search?q=",
         queryParameters: {
             apiKey: "b125d4bd9c944a569e79853e63c3b4ba",
-            topic: "test",
             limit: 10
         },
-        queryURLGet: function() {
+        queryURLGet: function(topic) {
             var queryURL = "";
-            queryURL = api.baseURL + api.queryParameters.topic + "&api_key=" +
+            queryURL = api.baseURL + topic + "&api_key=" +
                 api.queryParameters.apiKey + "&limit=" + api.queryParameters.limit;
             return queryURL
         },
@@ -25,11 +24,10 @@ $(document).ready(function() {
         $('#topics-input').val('Input New Topic');
         for (i = 0; i < topics.length; i++) {
             $("<button>")
-                .addClass("topics")
+                .addClass("topics btn-info")
                 .attr("data-name", topics[i])
                 .text(topics[i])
                 .appendTo("#topics-view");
-                console.log('', "rendered");
         }
     }
 
@@ -37,45 +35,92 @@ $(document).ready(function() {
     renderButtons();
 
 
+    function duplicateCheck(topic, topics) {
+        for (i = 0; i < topics.length - 1; i++) {
+            if ((topic !== topics[i]) && (topic !== unacceptableValues[i])) {
+                console.log('unacceptableValues', unacceptableValues[i]);
+            } else {
+                $("#topics-input").val("Invalid Input or Duplicate Topic")
+                return
+            }
+        }
+        newButton(topic)
+    }
+
+
+    function newButton(topic) {
+        $("<button>")
+            .addClass('topics btn-info')
+            .attr('data-name', topic)
+            .text(topic)
+            .appendTo("#topics-view");
+    };
+
+
+
+
     $('#topics-input').on('click', function(event) {
         $('#topics-input').val('')
-    })
+    });
 
+    // $('#topics-input').on('mouseleave', function(event) {
+    //     $('#topics-input').val("Input New Topic")
+    // });
 
     $("#add-topic").on("click", function(event) {
         event.preventDefault();
-        if (($('#topics-input').val() !== '') && ($('#topics-input').val() !== 'Input New Topic')) {
-            var topic = $("#topics-input").val().trim();
-            topics.push(topic);
-            console.log('', "posted new topic");
-            renderButtons();
-        } else {
-            $('#topics-input').val('Input New Topic');
+        for (i = 0; i < unacceptableValues.length - 1; i++) {
+            if ($('#topics-input').val() !== unacceptableValues[i]) {
+                topic = $("#topics-input").val().trim().toLowerCase();
+                topics.push(topic);
+                duplicateCheck(topic, topics);
+            } else {
+                $('#topics-input').val('Input New Topic');
+                console.log('', "No New Topic");
+            }
         }
-        console.log('', "finish posted new topic");
     })
 
-    $('.topics').on('click', function(event) {
+    $('body').on('click', 'button.topics', function(event) {
         console.log('', "api request initiated");
+        var topic = $(this).data("name").trim().toLowerCase();
         $.ajax({
-            url: api.queryURLGet(),
+            url: api.queryURLGet(topic),
             method: "GET"
         }).done(function(response) {
-            // instead of asking for "success" or "fail" give specific parameters to search for that will return the Boolean true or false 
-            // if (topics.length) {
-            for (i = 0; i < response.data.length; i++) {
-                console.log('', i);
-                var gifDiv = $("<div class='gif'>");
-                var gifURL = response.data[i].images.fixed_height_still.url;
-                var gif = $("<img>").attr("src", gifURL)
-                $("#topic-pic").append(gifDiv)
-                gifDiv.append(gif);
-                console.log('', gifURL);
+            if (topics.length) {
+                $('#topic-pic').html('')
+                for (i = 0; i < response.data.length; i++) {
+                    var gifDiv = $("<div class='gif'>");
+                    var stillGifURL = response.data[i].images.fixed_height_still.url;
+                    var activeGifURL = response.data[i].images.fixed_height.url;
+                    var gif = $("<img>")
+                        .attr("src", stillGifURL)
+                    $("#topic-pic")
+                        .append(gifDiv)
+                    gifDiv.append(gif);
+                    console.log('', "api request completed");
+                }
+            } else {
+                console.log('', 'Unable to connect to Giphy');
             }
-            // } else {
-            //     console.log('', 'Unable to connect to Giphy');
-            // }
-            // console.log('', "api request completed");
+        })
+    })
+
+    $("#topic-pic").on('click', '.gif img', function(event, topic, data) {
+        var topic = $(this).attr("src")
+        console.log('', topic);
+        $.ajax({
+            url: api.queryURLGet(topic),
+            method: "GET"
+        }).done(function(response) {
+            console.log('', response.data);
+            console.log('', stillGifURL);
+            var stillGifURL = response.data.images.fixed_height_still.url;
+            var activeGifURL = response.data.images.fixed_height.url;
+            console.log('', activeGifURL);
+
+
         })
     })
 })

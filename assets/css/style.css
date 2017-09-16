@@ -1,6 +1,22 @@
+
+
 button,
-    div,
-    form,
-    input {
-      margin: 10px;
-    }
+div,
+form,
+input {
+    margin: 10px;
+}
+
+#topics-input {
+	width: 300px;
+}
+
+body {
+	background: url("../images/weather.jpg");
+	background-size: 100%
+
+}
+
+#topic-pic {
+	display: inline;
+}
